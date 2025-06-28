@@ -1,17 +1,24 @@
 const express = require('express');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
+const { JWT } = require('google-auth-library');
 const creds = require('./credentials.json');
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080; // Koyeb expects 8080
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const SHEET_ID = '1ulatsc1tzHlkqvO3rvQitHmlH0vl_yRIXcZvnFro_po'; // Replace with your actual sheet ID
+const SHEET_ID = '1ulatsc1tzHlkqvO3rvQitHmlH0vl_yRIXcZvnFro_po';
+
+// Prepare JWT auth object
+const serviceAccountAuth = new JWT({
+  email: creds.client_email,
+  key: creds.private_key.replace(/\\n/g, '\n'),
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
 
 async function addEntryAndGetTotals(name, category, amount, date) {
-    const doc = new GoogleSpreadsheet(SHEET_ID);
-    await doc.useServiceAccountAuth(creds);
+    const doc = new GoogleSpreadsheet(SHEET_ID, serviceAccountAuth);
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     await sheet.addRow({ Name: name, Date: date, Amount: amount, Category: category });
@@ -37,7 +44,7 @@ app.post('/bot', async (req, res) => {
         const amount = parseFloat(amountStr);
         if (isNaN(amount)) throw new Error();
 
-        const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const currentDate = new Date().toISOString().split('T')[0];
 
         const totals = await addEntryAndGetTotals(name, category, amount, currentDate);
 
