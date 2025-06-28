@@ -2,7 +2,7 @@ const express = require('express');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const creds = require('./credentials.json');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
