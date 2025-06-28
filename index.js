@@ -27,6 +27,8 @@ async function addEntryAndGetTotals(name, category, amount, date) {
     const rows = await sheet.getRows();
     const totals = {};
     rows.forEach(row => {
+        console.log('Row data:', row._rawData); // This shows the actual row data
+        console.log('Processing row:', { Name: row.Name, Category: row.Category, Amount: row.Amount }); // Debug log
         const n = row.Name;
         const c = row.Category;
         const a = parseFloat(row.Amount || 0);
