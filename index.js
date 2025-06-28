@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID'; // Replace with your actual sheet ID
+const SHEET_ID = '1ulatsc1tzHlkqvO3rvQitHmlH0vl_yRIXcZvnFro_po'; // Replace with your actual sheet ID
 
 async function addEntryAndGetTotals(name, category, amount, date) {
     const doc = new GoogleSpreadsheet(SHEET_ID);
