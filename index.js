@@ -27,8 +27,6 @@ async function addEntryAndGetTotals(name, category, amount, date) {
     const rows = await sheet.getRows();
 
     // Debug: Print sheet info
-    console.log('Sheet title:', sheet.title);
-    console.log('Total rows:', rows.length);
     console.log('Sheet headers:', sheet.headerValues);
     
     // Debug: Print first few rows
