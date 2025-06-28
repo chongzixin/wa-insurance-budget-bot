@@ -26,28 +26,11 @@ async function addEntryAndGetTotals(name, category, amount, date) {
 
     const rows = await sheet.getRows();
 
-    // Debug: Print sheet info
-    console.log('Sheet headers:', sheet.headerValues);
-    
-    // Debug: Print first few rows
-    rows.slice(0, 3).forEach((row, index) => {
-        console.log(`Row ${index}:`, {
-            Name: row.Name,
-            Date: row.Date, 
-            Amount: row.Amount,
-            Category: row.Category
-        });
-        console.log(`Raw row ${index}:`, row._rawData);
-        console.log(`All row properties ${index}:`, Object.keys(row));
-    });
-
     const totals = {};
     rows.forEach(row => {
-        console.log('Row data:', row._rawData); // This shows the actual row data
-        console.log('Processing row:', { Name: row.Name, Category: row.Category, Amount: row.Amount }); // Debug log
-        const n = row.Name;
-        const c = row.Category;
-        const a = parseFloat(row.Amount || 0);
+        const n = row._rawData[0]; // Assuming Name is the first column
+        const c = row._rawData[3]; // Assuming Category is the fourth column
+        const a = parseFloat(row._rawData[2] || 0);
         if (!totals[n]) totals[n] = {};
         if (!totals[n][c]) totals[n][c] = 0;
         totals[n][c] += a;
