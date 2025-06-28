@@ -2,6 +2,7 @@ const express = require('express');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 const creds = require('./credentials.json');
+const twilio = require('twilio');
 const app = express();
 const PORT = process.env.PORT || 8000; // Koyeb expects 8000
 
@@ -55,10 +56,18 @@ app.post('/bot', async (req, res) => {
                 reply += `  ${cat}: ${total}\n`;
             });
         });
-        res.status(200).json({ message: reply });
+
+        // Twilio WhatsApp expects XML (TwiML)
+        const twiml = new twilio.twiml.MessagingResponse();
+        twiml.message(reply);
+        res.set('Content-Type', 'text/xml');
+        res.send(twiml.toString());
     } catch (e) {
         console.error(e);
-        res.status(400).json({ error: 'Error! Use: name, category, amount' });
+        const twiml = new twilio.twiml.MessagingResponse();
+        twiml.message('Error! Use: name, category, amount');
+        res.set('Content-Type', 'text/xml');
+        res.send(twiml.toString());
     }
 });
 
