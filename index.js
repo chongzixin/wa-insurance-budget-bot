@@ -1,7 +1,6 @@
 const express = require('express');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
-const creds = require('./credentials.json');
 const twilio = require('twilio');
 const app = express();
 const PORT = process.env.PORT || 8000; // Koyeb expects 8000
@@ -10,6 +9,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const SHEET_ID = '1ulatsc1tzHlkqvO3rvQitHmlH0vl_yRIXcZvnFro_po';
+
+// Decode credentials from environment variable
+const credsBase64 = process.env.GCP_INSURANCEBOT_KEY;
+if (!credsBase64) {
+    throw new Error('GCP_INSURANCEBOT_KEY environment variable is required');
+}
+
+const creds = JSON.parse(Buffer.from(credsBase64, 'base64').toString('utf8'));
 
 // Prepare JWT auth object
 const serviceAccountAuth = new JWT({
