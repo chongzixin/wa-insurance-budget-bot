@@ -37,7 +37,7 @@ async function addEntryAndGetTotals(name, category, amount, date) {
     rows.forEach(row => {
         const n = row._rawData[0]; // Assuming Name is the first column
         const c = row._rawData[3]; // Assuming Category is the fourth column
-        const a = parseFloat(row._rawData[2] || 0);
+        const a = Math.round(parseFloat(row._rawData[2] || 0) * 100) / 100; // Assuming Amount is the third column, round to 2 decimal places
         if (!totals[n]) totals[n] = {};
         if (!totals[n][c]) totals[n][c] = 0;
         totals[n][c] += a;
@@ -50,7 +50,7 @@ app.post('/bot', async (req, res) => {
     try {
         const [name, category, amountStr] = body.split(',').map(s => s.trim());
         if (!name || !category || !amountStr) throw new Error();
-        const amount = parseFloat(amountStr);
+        const amount = Math.round(parseFloat(amountStr) * 100) / 100; // Round to 2 decimal places
         if (isNaN(amount)) throw new Error();
 
         const currentDate = new Date().toISOString().split('T')[0];
