@@ -90,12 +90,11 @@ if (!TELEGRAM_BOT_TOKEN) {
     console.warn('Warning: TELEGRAM_BOT_TOKEN not set. Telegram support disabled.');
 }
 
-async function sendTelegramMessage(chatId, text, parse_mode='MarkdownV2') {
+async function sendTelegramMessage(chatId, text) {
     try {
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             chat_id: chatId,
             text: text,
-            parse_mode: parse_mode,
         });
     } catch (error) {
         console.error('Error sending message to Telegram:', error.message);
@@ -127,11 +126,11 @@ app.post('/telegram-webhook', async (req, res) => {
             });
         });
         
-        await sendTelegramMessage(chatId, reply, 'MarkdownV2');
+        await sendTelegramMessage(chatId, reply);
     } catch (err) {
         console.error(err);
         const chatId = message.chat.id;
-        await sendTelegramMessage(chatId, 'Error! Please use the format: name, category, amount', 'MarkdownV2');
+        await sendTelegramMessage(chatId, 'Error! Please use the format: name, category, amount');
     }
     
     res.sendStatus(200);
