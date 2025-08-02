@@ -20,9 +20,9 @@ const creds = JSON.parse(Buffer.from(credsBase64, 'base64').toString('utf8'));
 
 // Prepare JWT auth object
 const serviceAccountAuth = new JWT({
-  email: creds.client_email,
-  key: creds.private_key.replace(/\\n/g, '\n'),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    email: creds.client_email,
+    key: creds.private_key.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 async function addEntryAndGetTotals(name, category, amount, date) {
@@ -30,9 +30,9 @@ async function addEntryAndGetTotals(name, category, amount, date) {
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     await sheet.addRow({ Name: name, Date: date, Amount: amount, Category: category });
-
+    
     const rows = await sheet.getRows();
-
+    
     const totals = {};
     rows.forEach(row => {
         const n = row._rawData[0]; // Assuming Name is the first column
@@ -45,6 +45,7 @@ async function addEntryAndGetTotals(name, category, amount, date) {
     return totals;
 }
 
+// support twilio
 app.post('/bot', async (req, res) => {
     const body = req.body.Body || '';
     try {
@@ -52,11 +53,11 @@ app.post('/bot', async (req, res) => {
         if (!name || !category || !amountStr) throw new Error();
         const amount = Math.round(parseFloat(amountStr) * 100) / 100; // Round to 2 decimal places
         if (isNaN(amount)) throw new Error();
-
+        
         const currentDate = new Date().toISOString().split('T')[0];
-
+        
         const totals = await addEntryAndGetTotals(name, category, amount, currentDate);
-
+        
         let reply = 'Current spending totals:\n';
         Object.entries(totals).forEach(([person, cats]) => {
             reply += `${person}:\n`;
@@ -64,7 +65,7 @@ app.post('/bot', async (req, res) => {
                 reply += `  ${cat}: ${total}\n`;
             });
         });
-
+        
         // Twilio WhatsApp expects XML (TwiML)
         const twiml = new twilio.twiml.MessagingResponse();
         twiml.message(reply);
@@ -79,4 +80,63 @@ app.post('/bot', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Bot running on port ${PORT}`));
+// support Telegram
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;  // Set your Telegram bot token in env
+
+if (!TELEGRAM_BOT_TOKEN) {
+    console.warn('Warning: TELEGRAM_BOT_TOKEN not set. Telegram support disabled.');
+}
+
+async function sendTelegramMessage(chatId, text, parse_mode='MarkdownV2') {
+    try {
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: chatId,
+            text: text,
+            parse_mode: parse_mode,
+        });
+    } catch (error) {
+        console.error('Error sending message to Telegram:', error.message);
+    }
+}
+
+app.post('/telegram-webhook', async (req, res) => {
+    const message = req.body.message;
+    if (!message || !message.text) {
+        return res.sendStatus(200); // No message/text, ignore
+    }
+    
+    try {
+        const chatId = message.chat.id;
+        // Expect messages in format: "Name, category, amount"
+        const [name, category, amountStr] = message.text.split(',').map(s => s.trim());
+        if (!name || !category || !amountStr) throw new Error('Invalid format');
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount)) throw new Error('Amount not a number');
+        
+        const currentDate = new Date().toISOString().split('T')[0];
+        const totals = await addEntryAndGetTotals(name, category, amount, currentDate);
+        
+        let reply = '*Current spending totals:*\n';
+        Object.entries(totals).forEach(([person, cats]) => {
+            reply += `${person}:\n`;
+            Object.entries(cats).forEach(([cat, total]) => {
+                reply += ` • ${cat}: ${total}\n`;
+            });
+        });
+        
+        await sendTelegramMessage(chatId, reply, 'MarkdownV2');
+    } catch (err) {
+        console.error(err);
+        const chatId = message.chat.id;
+        await sendTelegramMessage(chatId, 'Error! Please use the format: name, category, amount', 'MarkdownV2');
+    }
+    
+    res.sendStatus(200);
+});
+
+app.listen(PORT, () => {
+    console.log(`Bot running on port ${PORT}`)
+    if(TELEGRAM_BOT_TOKEN){
+        console.log('Telegram webhook endpoint enabled at /telegram-webhook');
+    }
+});
