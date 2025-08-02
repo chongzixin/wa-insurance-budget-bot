@@ -118,7 +118,7 @@ app.post('/bot', async (req, res) => {
 
 // --- Telegram webhook endpoint ---
 if (TELEGRAM_BOT_TOKEN) {
-  app.post(TELEGRAM_WEBHOOK_PATH, async (req, res) => {
+  app.post('/telegram-webhook', async (req, res) => {
     const message = req.body.message;
     if (!message || !message.text) return res.sendStatus(200);
 
