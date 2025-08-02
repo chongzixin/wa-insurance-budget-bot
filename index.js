@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 const twilio = require('twilio');
@@ -82,6 +83,8 @@ app.post('/bot', async (req, res) => {
 
 // support Telegram
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;  // Set your Telegram bot token in env
+const WEBHOOK_URL = 'https://monthly-correy-chongzixin-ef29d02a.koyeb.app/telegram-webhook'; // Replace with your actual webhook URL
+axios.get(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${WEBHOOK_URL}`);
 
 if (!TELEGRAM_BOT_TOKEN) {
     console.warn('Warning: TELEGRAM_BOT_TOKEN not set. Telegram support disabled.');
